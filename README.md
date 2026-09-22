@@ -62,5 +62,5 @@ Once in the color page you can do the following:
 
 ## LICENSE
 
-This project is licensed under MIT, see [LICENSE.md](license.md)
+This project is licensed under MIT, see [LICENSE](license)
 
