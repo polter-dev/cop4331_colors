@@ -1,0 +1,164 @@
+@startuml class
+title Colors Lab - Class Diagram
+skinparam classAttributeIconSize 0
+
+package "Frontend (public/)" {
+  class "index.html" as index <<HTML page>> {
+    loginName : input
+    loginPassword : input
+    loginResult : span
+    --
+    loginButton.onclick()
+  }
+
+  class "color.html" as color <<HTML page>> {
+    userName : span
+    searchText : input
+    colorSearchResult : span
+    colorList : p
+    colorText : input
+    colorAddResult : span
+    --
+    DOMContentLoaded()
+    logoutButton.onclick()
+    searchColorButton.onclick()
+    addColorButton.onclick()
+  }
+
+  class "code.js" as code <<JS script>> {
+    +urlBase : string = 'http://COP4331-5.com/LAMPAPI' {readOnly}
+    +extension : string = 'php' {readOnly}
+    +userId : number = 0
+    +firstName : string = ""
+    +lastName : string = ""
+    --
+    +doLogin() : void
+    +saveCookie() : void
+    +readCookie() : void
+    +doLogout() : void
+    +addColor() : void
+    +searchColor() : void
+  }
+
+  class "md5.js" as md5 <<JS library>> {
+    +md5(string, key, raw) : string
+  }
+}
+
+package "API (api/)" {
+  class "Login.php" as LoginPhp <<PHP script>> {
+    -getRequestInfo() : array
+    -sendResultInfoAsJson(obj) : void
+    -returnWithError(err) : void
+    -returnWithInfo(firstName, lastName, id) : void
+  }
+
+  class "AddColor.php" as AddPhp <<PHP script>> {
+    -getRequestInfo() : array
+    -sendResultInfoAsJson(obj) : void
+    -returnWithError(err) : void
+  }
+
+  class "SearchColors.php" as SearchPhp <<PHP script>> {
+    -getRequestInfo() : array
+    -sendResultInfoAsJson(obj) : void
+    -returnWithError(err) : void
+    -returnWithInfo(searchResults) : void
+  }
+
+  class "config.php" as config <<PHP config>> {
+    +dbHost : string
+    +dbUser : string
+    +dbPass : string
+    +dbName : string
+  }
+}
+
+package "JSON payloads (HTTP body)" {
+  class LoginRequest <<JSON>> {
+    login : string
+    password : string
+  }
+  class LoginResponse <<JSON>> {
+    id : number
+    firstName : string
+    lastName : string
+    error : string
+  }
+  class AddColorRequest <<JSON>> {
+    color : string
+    userId : number
+  }
+  class AddColorResponse <<JSON>> {
+    error : string
+  }
+  class SearchColorsRequest <<JSON>> {
+    search : string
+    userId : number
+  }
+  class SearchColorsResponse <<JSON>> {
+    results : string[]
+    error : string
+  }
+}
+
+package "Database (MySQL COP4331)" {
+  class Users <<table>> {
+    ID <<PK>>
+    firstName
+    lastName
+    Login
+    Password
+  }
+  class Colors <<table>> {
+    UserID <<FK>>
+    Name
+  }
+}
+
+index ..> code : <<script>>
+index ..> md5 : <<script>>
+color ..> code : <<script>>
+
+code ..> LoginPhp : doLogin()\nPOST LAMPAPI/Login.php\nLoginRequest -> LoginResponse
+code ..> AddPhp : addColor()\nPOST LAMPAPI/AddColor.php\nAddColorRequest -> AddColorResponse
+code ..> SearchPhp : searchColor()\nPOST LAMPAPI/SearchColors.php\nSearchColorsRequest -> SearchColorsResponse
+
+LoginPhp ..> config : <<require>>
+AddPhp ..> config : <<require>>
+SearchPhp ..> config : <<require>>
+
+LoginPhp ..> Users : SELECT
+AddPhp ..> Colors : INSERT
+SearchPhp ..> Colors : SELECT ... LIKE
+
+Users "1" - "0..*" Colors : owns >\n(Colors.UserID = Users.ID)
+
+' layout only (hidden links): tables below the API tier,
+' payloads as a grid with each request above its response
+config -[hidden]-> Users
+config -[hidden]-> Colors
+LoginRequest -[hidden]-> LoginResponse
+AddColorRequest -[hidden]-> AddColorResponse
+SearchColorsRequest -[hidden]-> SearchColorsResponse
+LoginRequest -[hidden]r- AddColorRequest
+AddColorRequest -[hidden]r- SearchColorsRequest
+
+note bottom of md5
+  Loaded by index.html only.
+  code.js never calls md5(): the calls
+  are commented out (code.js:16, :21).
+end note
+
+note bottom of SearchColorsResponse
+  On "No Records Found" or a DB connect
+  error, SearchColors.php emits
+  {id, firstName, lastName, error} instead,
+  with no results field (SearchColors.php:59).
+end note
+
+note bottom of config
+  Gitignored; created from
+  config.example.php.
+end note
+@enduml
