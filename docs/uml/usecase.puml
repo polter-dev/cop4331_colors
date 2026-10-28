@@ -1,0 +1,37 @@
+@startuml usecase
+left to right direction
+skinparam packageStyle rectangle
+
+actor User
+
+rectangle "Colors Web Application" {
+  usecase "Log In" as Login
+  usecase "Search Colors" as Search
+  usecase "Add Color" as Add
+  usecase "Log Out" as Logout
+}
+
+' UML actor/use case associations are plain lines (no arrowheads)
+User -- Login
+User -- Search
+User -- Add
+User -- Logout
+
+note right of Login
+  Account must already exist in the Users table;
+  the app has no registration page.
+end note
+
+note as Pre
+  Precondition: user is logged in.
+  readCookie() checks the userId in the session
+  cookie when color.html loads and redirects to
+  index.html if it is missing or expired (20 min).
+  Enforced client side only: the API trusts
+  whatever userId it is sent.
+end note
+
+Search .. Pre
+Add .. Pre
+Logout .. Pre
+@enduml
