@@ -5,7 +5,8 @@
 	$searchResults = "";
 	$searchCount = 0;
 
-	$conn = new mysqli("localhost", "YOUR_DB_USER", "YOUR_DB_PASSWORD", "COP4331");
+	require __DIR__ . "/config.php";
+	$conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 	if ($conn->connect_error) 
 	{
 		returnWithError( $conn->connect_error );
