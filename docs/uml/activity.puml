@@ -1,0 +1,104 @@
+@startuml activity
+title Colors App - User Session Activity Diagram
+
+|Browser (code.js)|
+start
+:Open index.html\n(loads md5.js, code.js);
+repeat
+  :Enter loginName / loginPassword;
+  :Click "Do It" -> doLogin();
+  note right
+    md5(password) is commented out
+    (code.js:16, 21): the password is
+    sent in plain text over http://
+  end note
+  :POST {login, password}\nto Login.php (XHR);
+  |PHP API|
+  :Login.php: read JSON body;
+  if (mysqli connect_error?) then (yes)
+    :returnWithError(connect_error)\nid = 0;
+  else (no)
+    |Database|
+    :SELECT ID, firstName, lastName\nFROM Users\nWHERE Login = ? AND Password = ?;
+    |PHP API|
+    if (row found?) then (yes)
+      :returnWithInfo(firstName,\nlastName, ID);
+    else (no)
+      :returnWithError("No Records Found")\nid = 0;
+    endif
+  endif
+  |Browser (code.js)|
+  :readyState 4 && status 200:\nparse JSON, userId = id;
+  backward :Show "User/Password combination\nincorrect" in #loginResult;
+repeat while (userId < 1?) is (yes)
+-> no;
+:saveCookie()\n(firstName, lastName, userId;\nexpires in 20 min);
+:Redirect to color.html;
+:DOMContentLoaded -> readCookie();
+if (userId < 0?\n(no / expired cookie)) then (yes)
+  :Redirect to index.html;
+  stop
+else (no)
+endif
+
+repeat
+  :Choose action on color.html;
+  ' Sequential guarded decisions instead of one 3-way switch: this keeps the
+  ' AddColor and SearchColors round trips in separate vertical bands so their
+  ' cross-lane edges never share a segment.
+  if (action = Add Color?) then (yes)
+    :Enter colorText, click\n"Add Color" -> addColor();
+    :POST {color, userId}\nto AddColor.php;
+    |PHP API|
+    :AddColor.php: read JSON body;
+    if (mysqli connect_error?) then (yes)
+      :returnWithError(connect_error);
+    else (no)
+      |Database|
+      :INSERT INTO Colors\n(UserId, Name) VALUES (?, ?);
+      |PHP API|
+      :returnWithError("")\n(execute() result not checked);
+    endif
+    |Browser (code.js)|
+    :Status 200: show "Color has been\nadded" in #colorAddResult\n(response body not checked);
+  else (no)
+  endif
+  if (action = Search Colors?) then (yes)
+    :Enter searchText, click\n"Search Color" -> searchColor();
+    :POST {search, userId}\nto SearchColors.php;
+    |PHP API|
+    :SearchColors.php: read JSON body;
+    if (mysqli connect_error?) then (yes)
+      :returnWithError(connect_error);
+    else (no)
+      |Database|
+      :SELECT Name FROM Colors\nWHERE Name LIKE ? AND UserID = ?\n(pattern bound as '%' + search + '%');
+      |PHP API|
+      if (searchCount == 0?) then (yes)
+        :returnWithError("No Records Found")\n(no "results" field);
+      else (no)
+        :returnWithInfo(results[]);
+      endif
+    endif
+    |Browser (code.js)|
+    :Status 200: show "Color(s) has been\nretrieved" in #colorSearchResult;
+    if (response has results[]?) then (yes)
+      :Render colors (joined by <br />)\ninto <p id="colorList">;
+    else (no)
+      :Uncaught TypeError on results.length\n(console only); previous list stays;
+    endif
+  else (no)
+  endif
+repeat while (action = Log Out?) is (no)
+-> yes;
+:doLogout(): clear vars,\nexpire cookie;
+:Redirect to index.html;
+stop
+
+legend left
+  try/catch wraps only the synchronous xhr.send(). With async XHR,
+  network failures arrive as status 0 and, like any non-200 response,
+  are silently ignored. Exceptions thrown inside onreadystatechange
+  (JSON.parse, results.length) are not caught.
+endlegend
+@enduml
