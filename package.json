@@ -1,0 +1,33 @@
+{
+  "name": "colors",
+  "version": "1.0.0",
+  "description": "A small LAMP project for my course COP 4331, creating a GitHub repo to manage the contents of this folder.",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
+    "lint:html": "html-validate \"public/**/*.html\"",
+    "lint:css": "stylelint \"public/**/*.css\" --max-warnings 0",
+    "lint:js": "eslint \"public/**/*.js\" --max-warnings 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/polter-dev/cop4331_colors.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/polter-dev/cop4331_colors/issues"
+  },
+  "homepage": "https://github.com/polter-dev/cop4331_colors#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "html-validate": "^11.18.0",
+    "stylelint": "^18.0.0",
+    "stylelint-config-standard": "^41.0.0"
+  }
+}
