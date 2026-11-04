@@ -53,6 +53,31 @@ Once in the color page you can do the following:
 - **Log out:** Logout button for switching users.
 
 
+## Local lint checks
+
+Node.js is used only for development linting tools. The application still runs
+on Apache, PHP, and MySQL. Use Node.js 22.22.2 or newer in the 22.x line, or
+Node.js 24.15.0 or newer in the 24.x line.
+
+Install the tools using the committed lockfile:
+
+```bash
+npm ci
+```
+
+Run all HTML, CSS, and JavaScript checks:
+
+```bash
+npm run lint
+```
+
+You can also run `npm run lint:html`, `npm run lint:css`, or `npm run lint:js`
+individually. Review any automatic changes made with `npm run lint:html -- --fix`
+or `npm run lint:css -- --fix`, then rerun the checks for remaining issues.
+
+Commit `package.json`, `package-lock.json`, and the lint configuration files.
+Do not commit `node_modules/` or generated lint reports.
+
 ## Assumptions
 
 - There is no security to this page so assume that breaches can occur
